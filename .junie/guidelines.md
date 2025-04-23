@@ -4,6 +4,15 @@
 이 프로젝트는 Django 기반 웹 애플리케이션입니다. 프로젝트는 표준 Django 프로젝트 구조와 규칙을 따릅니다.
 
 ## 디렉토리 구조
+- `community/`: 커뮤니티 관련 Django 앱
+  - `models.py`: 커뮤니티 모델 정의
+  - `views.py`: 커뮤니티 관련 뷰 함수
+  - `forms.py`: 커뮤니티 관련 폼
+  - `urls.py`: 커뮤니티 관련 URL 라우팅
+  - `admin.py`: 관리자 인터페이스 설정
+  - `tests.py`: 테스트 코드
+  - `migrations/`: 데이터베이스 마이그레이션 파일
+  - `README.md`: 커뮤니티 앱 문서
 - `config/`: Django 프로젝트 설정 파일 포함
   - `settings/`: 다양한 환경에 대한 설정 포함
     - `base.py`: 모든 환경에서 공유되는 기본 설정
@@ -17,8 +26,21 @@
 - `templates/`: HTML 템플릿
   - `base.html`: 기본 템플릿 레이아웃
   - `home.html`: 홈페이지 템플릿
+  - `community/`: 커뮤니티 관련 템플릿
+    - `board_detail.html`: 게시판 상세 페이지
+    - `category_list.html`: 카테고리 목록
+    - `comment_form.html`, `comment_confirm_delete.html`: 댓글 관련 템플릿
+    - `faq_list.html`: FAQ 목록
+    - `media_confirm_delete.html`: 미디어 삭제 확인
+    - `notice_detail.html`, `notice_list.html`: 공지사항 관련 템플릿
+    - `post_detail.html`, `post_form.html`, `post_confirm_delete.html`, `post_with_media_form.html`: 게시글 관련 템플릿
+    - `report_form.html`, `report_success.html`: 신고 관련 템플릿
+    - `search_results.html`: 검색 결과 페이지
   - `users/`: 사용자 관련 템플릿
-    - 로그인, 회원가입, 프로필 등의 템플릿
+    - `login.html`: 로그인 페이지
+    - `register.html`: 회원가입 페이지
+    - `profile.html`, `profile_update.html`, `user_update.html`: 프로필 관련 템플릿
+    - `password_change.html`, `password_reset.html`, `password_reset_complete.html`, `password_reset_confirm.html`, `password_reset_done.html`, `password_reset_email.html`, `password_reset_subject.txt`: 비밀번호 관련 템플릿
 - `users/`: 사용자 관리 Django 앱
   - `models.py`: 사용자 모델 정의
   - `views.py`: 사용자 관련 뷰 함수
@@ -26,15 +48,20 @@
   - `urls.py`: 사용자 관련 URL 라우팅
   - `admin.py`: 관리자 인터페이스 설정
   - `signals.py`: 사용자 관련 시그널 처리
+  - `tests.py`: 테스트 코드
   - `migrations/`: 데이터베이스 마이그레이션 파일
 - `.junie/`: 프로젝트 가이드라인 및 문서
   - `guidelines.md`: 프로젝트 가이드라인 문서
+- `.venv/`: 가상 환경 디렉토리
 
 ### 주요 파일
 - `manage.py`: Django 프로젝트 관리 스크립트
 - `db.sqlite3`: SQLite 데이터베이스 파일
 - `pyproject.toml`: 프로젝트 의존성 및 설정
 - `uv.lock`: 의존성 잠금 파일
+- `conftest.py`: pytest 공유 fixture 및 설정
+- `pytest.ini`: pytest 설정 파일
+- `README.md`: 프로젝트 README 파일
 
 ## 개발 가이드라인
 
