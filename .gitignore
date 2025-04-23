@@ -329,3 +329,5 @@ cython_debug/
 #.junie/
 
 #docs/
+
+migrations/
