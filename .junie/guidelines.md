@@ -12,14 +12,41 @@
   - `urls.py`: URL 라우팅 설정
   - `wsgi.py` 및 `asgi.py`: 웹 서버 게이트웨이 인터페이스
 - `docs/`: 문서 파일
+  - `requirements.md`: 프로젝트 요구사항 문서
+- `static/`: 정적 파일 (CSS, JavaScript, 이미지 등)
 - `templates/`: HTML 템플릿
+  - `base.html`: 기본 템플릿 레이아웃
+  - `home.html`: 홈페이지 템플릿
+  - `users/`: 사용자 관련 템플릿
+    - 로그인, 회원가입, 프로필 등의 템플릿
+- `users/`: 사용자 관리 Django 앱
+  - `models.py`: 사용자 모델 정의
+  - `views.py`: 사용자 관련 뷰 함수
+  - `forms.py`: 사용자 관련 폼
+  - `urls.py`: 사용자 관련 URL 라우팅
+  - `admin.py`: 관리자 인터페이스 설정
+  - `signals.py`: 사용자 관련 시그널 처리
+  - `migrations/`: 데이터베이스 마이그레이션 파일
 - `.junie/`: 프로젝트 가이드라인 및 문서
+  - `guidelines.md`: 프로젝트 가이드라인 문서
+
+### 주요 파일
+- `manage.py`: Django 프로젝트 관리 스크립트
+- `db.sqlite3`: SQLite 데이터베이스 파일
+- `pyproject.toml`: 프로젝트 의존성 및 설정
+- `uv.lock`: 의존성 잠금 파일
 
 ## 개발 가이드라인
 
 ### 환경 설정
 1. `.venv`를 사용하여 가상 환경 생성
-2. 패키지 관리자(pip 또는 uv)를 사용하여 의존성 설치
+2. 이 프로젝트는 Python 패키지 매니저 `uv`를 사용합니다. 패키지 설치 시 `uv` 또는 `uv pip` 명령어를 사용해야 합니다.
+   ```
+   # 패키지 설치 예시
+   uv pip install -r requirements.txt
+   # 또는
+   uv install -r requirements.txt
+   ```
 3. `python manage.py migrate`로 마이그레이션 실행
 4. `python manage.py runserver`로 개발 서버 시작
 
