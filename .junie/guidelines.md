@@ -67,6 +67,52 @@
 - 풀 리퀘스트를 제출하기 전에 테스트 실행
 - 높은 테스트 커버리지 목표
 
+#### pytest 설정 및 사용법
+이 프로젝트는 테스트를 위해 pytest를 사용합니다. 다음은 pytest 설정 및 사용 방법입니다:
+
+1. **설치된 테스트 패키지**:
+   - `pytest`: 테스트 프레임워크
+   - `pytest-django`: Django와 pytest 통합
+   - `pytest-cov`: 코드 커버리지 보고서 생성
+
+2. **테스트 실행 방법**:
+   ```bash
+   # 모든 테스트 실행
+   python -m pytest
+
+   # 특정 앱의 테스트만 실행
+   python -m pytest users/
+   python -m pytest community/
+
+   # 특정 테스트 파일 실행
+   python -m pytest users/tests.py
+
+   # 코드 커버리지 보고서 생성
+   python -m pytest --cov=. --cov-report=html
+   ```
+
+3. **테스트 파일 구조**:
+   - 테스트 파일은 `test_*.py`, `*_test.py`, 또는 `tests.py` 형식으로 작성
+   - 테스트 함수는 `test_`로 시작해야 함
+
+4. **pytest 설정 파일**:
+   - `pytest.ini`: 프로젝트 루트에 위치하며 기본 설정 포함
+   - `conftest.py`: 공유 fixture 및 설정 포함
+
+5. **주요 fixture**:
+   - `client`: Django 테스트 클라이언트
+   - `db`: 데이터베이스 액세스 허용
+   - `user_data`: 테스트 사용자 데이터
+   - `create_user`: 테스트 사용자 생성
+
+6. **데이터베이스 테스트**:
+   - 데이터베이스를 사용하는 테스트에는 `@pytest.mark.django_db` 데코레이터 사용
+
+7. **테스트 작성 가이드라인**:
+   - 각 테스트는 단일 기능 또는 동작 테스트에 집중
+   - 명확한 이름과 설명적인 assert 메시지 사용
+   - 테스트 간 의존성 최소화
+
 ## 배포
 - 프로젝트는 개발 및 프로덕션 환경에 대한 별도의 설정이 있음
 - 프로덕션 서버에 배포할 때 프로덕션 설정 사용
