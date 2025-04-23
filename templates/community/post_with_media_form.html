@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}New Post with Media{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'community:category_list' %}">Categories</a></li>
+            {% if request.GET.board %}
+                {% with board_id=request.GET.board %}
+                    <li class="breadcrumb-item"><a href="{% url 'community:board_detail' pk=board_id slug='board' %}">Board</a></li>
+                {% endwith %}
+            {% endif %}
+            <li class="breadcrumb-item active">New Post with Media</li>
+        </ol>
+    </nav>
+    
+    <div class="card">
+        <div class="card-header bg-success text-white">
+            <h1 class="h3 mb-0">Create New Post with Media</h1>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <label for="{{ form.title.id_for_label }}" class="form-label">{{ form.title.label }}</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.title.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.board.id_for_label }}" class="form-label">{{ form.board.label }}</label>
+                    {{ form.board }}
+                    {% if form.board.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.board.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.content.id_for_label }}" class="form-label">{{ form.content.label }}</label>
+                    {{ form.content }}
+                    {% if form.content.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.content.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">You can use Markdown for formatting.</div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.images.id_for_label }}" class="form-label">{{ form.images.label }}</label>
+                    {{ form.images }}
+                    {% if form.images.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.images.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">{{ form.images.help_text }}</div>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% if request.GET.board %}{% url 'community:board_detail' pk=request.GET.board slug='board' %}{% else %}{% url 'community:category_list' %}{% endif %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-success">Create Post with Media</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

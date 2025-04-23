@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Community Categories{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Community Categories</h1>
+    
+    <div class="row mb-4">
+        <div class="col">
+            <form action="{% url 'community:search' %}" method="get" class="d-flex">
+                <input type="text" name="q" class="form-control me-2" placeholder="Search categories, boards, notices, FAQs...">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-8">
+            {% if categories %}
+                {% for category in categories %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h2 class="h5 mb-0">{{ category.name }}</h2>
+                        </div>
+                        <div class="card-body">
+                            {% if category.description %}
+                                <p class="text-muted">{{ category.description }}</p>
+                            {% endif %}
+                            
+                            <div class="list-group">
+                                {% for board in category.boards.all %}
+                                    {% if board.is_active %}
+                                        <a href="{% url 'community:board_detail' board.pk board.slug %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h3 class="h6 mb-1">{{ board.name }}</h3>
+                                                {% if board.description %}
+                                                    <p class="text-muted small mb-0">{{ board.description }}</p>
+                                                {% endif %}
+                                            </div>
+                                            {% if board.is_private %}
+                                                <span class="badge bg-warning text-dark">Private</span>
+                                            {% endif %}
+                                        </a>
+                                    {% endif %}
+                                {% empty %}
+                                    <div class="list-group-item text-muted">No boards available in this category.</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    No categories available yet.
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h3 class="h5 mb-0">Community Links</h3>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{% url 'community:notice_list' %}" class="list-group-item list-group-item-action">
+                            <i class="bi bi-megaphone"></i> Notices & Announcements
+                        </a>
+                        <a href="{% url 'community:faq_list' %}" class="list-group-item list-group-item-action">
+                            <i class="bi bi-question-circle"></i> FAQ
+                        </a>
+                        <a href="{% url 'community:report_create' %}" class="list-group-item list-group-item-action">
+                            <i class="bi bi-flag"></i> Report Content
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

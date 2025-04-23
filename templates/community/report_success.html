@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Report Submitted{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'community:category_list' %}">Community</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'community:report_create' %}">Report Content</a></li>
+            <li class="breadcrumb-item active">Success</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h1 class="h3 mb-0">Report Submitted Successfully</h1>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success mb-4">
+                        <h2 class="h4"><i class="bi bi-check-circle"></i> Thank you for your report</h2>
+                        <p>Your report has been submitted and will be reviewed by our moderation team as soon as possible.</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h3 class="h5">What happens next?</h3>
+                        <ul>
+                            <li>Our moderation team will review your report</li>
+                            <li>Appropriate action will be taken if the content violates our community guidelines</li>
+                            <li>The reported content may be removed or edited</li>
+                            <li>In some cases, the user who posted the content may face disciplinary action</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <p class="mb-0">
+                            <i class="bi bi-info-circle"></i> 
+                            For privacy reasons, we may not be able to inform you of the specific actions taken.
+                            However, rest assured that all reports are taken seriously.
+                        </p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'community:category_list' %}" class="btn btn-primary">
+                            <i class="bi bi-house"></i> Return to Community
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

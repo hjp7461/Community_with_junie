@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'community:category_list' %}">Categories</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'community:board_detail' pk=post.board.pk slug=post.board.slug %}">{{ post.board.name }}</a></li>
+            <li class="breadcrumb-item active">{{ post.title }}</li>
+        </ol>
+    </nav>
+    
+    <!-- Post -->
+    <div class="card mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">{{ post.title }}</h1>
+            <div>
+                {% if post.is_pinned %}<span class="badge bg-danger me-1">Pinned</span>{% endif %}
+                {% if post.is_locked %}<span class="badge bg-warning me-1">Locked</span>{% endif %}
+                <span class="badge bg-secondary">Views: {{ post.view_count }}</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="d-flex justify-content-between mb-3">
+                <div>
+                    <strong>{{ post.author.username }}</strong>
+                    <span class="text-muted ms-2">{{ post.created_at|date:"F d, Y H:i" }}</span>
+                </div>
+                {% if user == post.author %}
+                    <div>
+                        <a href="{% url 'community:post_update' pk=post.pk %}" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                        <a href="{% url 'community:post_delete' pk=post.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="post-content mb-4">
+                {{ post.content|linebreaks }}
+            </div>
+            
+            {% if post.media.exists %}
+                <div class="post-media mb-4">
+                    <h5>Attached Media</h5>
+                    <div class="row">
+                        {% for media in post.media.all %}
+                            <div class="col-md-4 mb-3">
+                                <div class="card">
+                                    <img src="{{ media.webp_image.url }}" class="card-img-top" alt="{{ media.caption|default:'Image' }}">
+                                    {% if media.caption %}
+                                        <div class="card-body">
+                                            <p class="card-text">{{ media.caption }}</p>
+                                        </div>
+                                    {% endif %}
+                                    {% if user == post.author %}
+                                        <div class="card-footer">
+                                            <form method="post" action="{% url 'community:media_delete' media_id=media.id %}">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-danger w-100">Delete</button>
+                                            </form>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+            
+            {% if user == post.author and not post.is_locked %}
+                <div class="mt-4">
+                    <h5>Add Media</h5>
+                    <form method="post" action="{% url 'community:media_upload' post_id=post.id %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ media_form.image.id_for_label }}" class="form-label">{{ media_form.image.label }}</label>
+                                    {{ media_form.image }}
+                                    {% if media_form.image.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in media_form.image.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ media_form.caption.id_for_label }}" class="form-label">{{ media_form.caption.label }}</label>
+                                    {{ media_form.caption }}
+                                    {% if media_form.caption.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in media_form.caption.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Upload Media</button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Comments -->
+    <div class="card mb-4">
+        <div class="card-header bg-light">
+            <h2 class="h4 mb-0">Comments ({{ post.comments.count }})</h2>
+        </div>
+        <div class="card-body">
+            {% if comments %}
+                {% for comment in comments %}
+                    <div class="comment mb-4" id="comment-{{ comment.id }}">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <strong>{{ comment.author.username }}</strong>
+                                <span class="text-muted ms-2">{{ comment.created_at|date:"F d, Y H:i" }}</span>
+                            </div>
+                            {% if user == comment.author %}
+                                <div>
+                                    <a href="{% url 'community:comment_update' comment_id=comment.id %}" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                                    <a href="{% url 'community:comment_delete' comment_id=comment.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="comment-content mt-2">
+                            {{ comment.content|linebreaks }}
+                        </div>
+                        
+                        <!-- Reply button -->
+                        {% if not post.is_locked %}
+                            <button class="btn btn-sm btn-outline-secondary mt-2 reply-button" data-comment-id="{{ comment.id }}">Reply</button>
+                            
+                            <!-- Reply form (hidden by default) -->
+                            <div class="reply-form mt-3" id="reply-form-{{ comment.id }}" style="display: none;">
+                                <form method="post" action="{% url 'community:comment_create' post_id=post.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                                    <div class="mb-3">
+                                        <label for="content-{{ comment.id }}" class="form-label">Your Reply</label>
+                                        <textarea name="content" id="content-{{ comment.id }}" class="form-control" rows="3" required></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Submit Reply</button>
+                                    <button type="button" class="btn btn-secondary cancel-reply" data-comment-id="{{ comment.id }}">Cancel</button>
+                                </form>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Replies -->
+                        {% if comment.replies.exists %}
+                            <div class="replies mt-3 ms-4">
+                                {% for reply in comment.replies.all %}
+                                    <div class="reply mb-3 border-start border-3 ps-3" id="comment-{{ reply.id }}">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <strong>{{ reply.author.username }}</strong>
+                                                <span class="text-muted ms-2">{{ reply.created_at|date:"F d, Y H:i" }}</span>
+                                            </div>
+                                            {% if user == reply.author %}
+                                                <div>
+                                                    <a href="{% url 'community:comment_update' comment_id=reply.id %}" class="btn btn-sm btn-outline-primary me-1">Edit</a>
+                                                    <a href="{% url 'community:comment_delete' comment_id=reply.id %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="reply-content mt-2">
+                                            {{ reply.content|linebreaks }}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% if not forloop.last %}<hr>{% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-secondary">
+                    <p class="mb-0">No comments yet. Be the first to comment!</p>
+                </div>
+            {% endif %}
+            
+            <!-- New comment form -->
+            {% if user.is_authenticated and not post.is_locked %}
+                <div class="mt-4">
+                    <h3 class="h5">Add a Comment</h3>
+                    <form method="post" action="{% url 'community:comment_create' post_id=post.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ comment_form.content.id_for_label }}" class="form-label">{{ comment_form.content.label }}</label>
+                            {{ comment_form.content }}
+                            {% if comment_form.content.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in comment_form.content.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Comment</button>
+                    </form>
+                </div>
+            {% elif post.is_locked %}
+                <div class="alert alert-warning mt-4">
+                    <p class="mb-0">This post is locked. New comments are not allowed.</p>
+                </div>
+            {% elif not user.is_authenticated %}
+                <div class="alert alert-info mt-4">
+                    <p class="mb-0">Please <a href="{% url 'users:login' %}">log in</a> to comment.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Reply functionality
+        const replyButtons = document.querySelectorAll('.reply-button');
+        const cancelButtons = document.querySelectorAll('.cancel-reply');
+        
+        replyButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const commentId = this.getAttribute('data-comment-id');
+                document.getElementById(`reply-form-${commentId}`).style.display = 'block';
+                this.style.display = 'none';
+            });
+        });
+        
+        cancelButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const commentId = this.getAttribute('data-comment-id');
+                document.getElementById(`reply-form-${commentId}`).style.display = 'none';
+                document.querySelector(`.reply-button[data-comment-id="${commentId}"]`).style.display = 'inline-block';
+            });
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

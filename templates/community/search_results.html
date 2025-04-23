@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results: {{ query }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'community:category_list' %}">Community</a></li>
+            <li class="breadcrumb-item active">Search Results</li>
+        </ol>
+    </nav>
+    
+    <h1 class="mb-4">Search Results: "{{ query }}"</h1>
+    
+    <div class="row mb-4">
+        <div class="col">
+            <form action="{% url 'community:search' %}" method="get" class="d-flex">
+                <input type="text" name="q" class="form-control me-2" placeholder="Search categories, boards, notices, FAQs..." value="{{ query }}">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+    </div>
+    
+    {% if not query %}
+        <div class="alert alert-info">
+            Please enter a search term to find content.
+        </div>
+    {% elif not results.categories and not results.boards and not results.notices and not results.faqs %}
+        <div class="alert alert-warning">
+            <i class="bi bi-search"></i> No results found for "{{ query }}". Please try a different search term.
+        </div>
+    {% else %}
+        <div class="row">
+            <div class="col-md-8">
+                {% if results.categories %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h2 class="h5 mb-0">Categories ({{ results.categories|length }})</h2>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for category in results.categories %}
+                                <a href="{% url 'community:category_list' %}#category-{{ category.id }}" class="list-group-item list-group-item-action">
+                                    <h3 class="h6 mb-1">{{ category.name }}</h3>
+                                    {% if category.description %}
+                                        <p class="text-muted small mb-0">{{ category.description|truncatechars:100 }}</p>
+                                    {% endif %}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if results.boards %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h2 class="h5 mb-0">Boards ({{ results.boards|length }})</h2>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for board in results.boards %}
+                                <a href="{% url 'community:board_detail' board.pk board.slug %}" class="list-group-item list-group-item-action">
+                                    <h3 class="h6 mb-1">{{ board.name }}</h3>
+                                    <small class="text-muted">in {{ board.category.name }}</small>
+                                    {% if board.description %}
+                                        <p class="text-muted small mb-0">{{ board.description|truncatechars:100 }}</p>
+                                    {% endif %}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if results.notices %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h2 class="h5 mb-0">Notices ({{ results.notices|length }})</h2>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for notice in results.notices %}
+                                <a href="{% url 'community:notice_detail' notice.pk %}" class="list-group-item list-group-item-action">
+                                    <h3 class="h6 mb-1">{{ notice.title }}</h3>
+                                    <small class="text-muted">{{ notice.created_at|date:"M d, Y" }} - {{ notice.get_notice_type_display }}</small>
+                                    <p class="text-muted small mb-0">{{ notice.content|truncatechars:100 }}</p>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if results.faqs %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h2 class="h5 mb-0">FAQs ({{ results.faqs|length }})</h2>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for faq in results.faqs %}
+                                <a href="{% url 'community:faq_list' %}#faq-{{ faq.id }}" class="list-group-item list-group-item-action">
+                                    <h3 class="h6 mb-1">{{ faq.question }}</h3>
+                                    {% if faq.category %}
+                                        <small class="text-muted">in {{ faq.category }}</small>
+                                    {% endif %}
+                                    <p class="text-muted small mb-0">{{ faq.answer|truncatechars:100 }}</p>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h3 class="h5 mb-0">Search Tips</h3>
+                    </div>
+                    <div class="card-body">
+                        <ul class="mb-0">
+                            <li>Use specific keywords for better results</li>
+                            <li>Search for complete phrases in quotes</li>
+                            <li>Try different variations of words</li>
+                            <li>Check spelling if you don't get expected results</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h3 class="h5 mb-0">Quick Links</h3>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="{% url 'community:category_list' %}" class="list-group-item list-group-item-action">
+                            <i class="bi bi-house"></i> Community Home
+                        </a>
+                        <a href="{% url 'community:notice_list' %}" class="list-group-item list-group-item-action">
+                            <i class="bi bi-megaphone"></i> Notices & Announcements
+                        </a>
+                        <a href="{% url 'community:faq_list' %}" class="list-group-item list-group-item-action">
+                            <i class="bi bi-question-circle"></i> FAQ
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
