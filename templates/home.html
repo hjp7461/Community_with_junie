@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Community{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="card-title">Welcome to Community</h1>
+                    <p class="card-text">
+                        This is a community platform where you can connect with others, share content, and engage in discussions.
+                    </p>
+                    <div class="mt-4">
+                        <a href="{% url 'community:category_list' %}" class="btn btn-success me-2">
+                            <i class="bi bi-people"></i> Explore Community
+                        </a>
+                        {% if not user.is_authenticated %}
+                            <a href="{% url 'users:login' %}" class="btn btn-primary me-2">Login</a>
+                            <a href="{% url 'users:register' %}" class="btn btn-outline-primary">Register</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h5 mb-0">Community Management</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h3 class="h5"><i class="bi bi-grid-3x3-gap"></i> Categories & Boards</h3>
+                                    <p class="small text-muted">Explore our organized discussion boards</p>
+                                    <a href="{% url 'community:category_list' %}" class="btn btn-sm btn-outline-primary">Browse Categories</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h3 class="h5"><i class="bi bi-megaphone"></i> Announcements</h3>
+                                    <p class="small text-muted">Stay updated with the latest news</p>
+                                    <a href="{% url 'community:notice_list' %}" class="btn btn-sm btn-outline-primary">View Notices</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h3 class="h5"><i class="bi bi-question-circle"></i> FAQ</h3>
+                                    <p class="small text-muted">Find answers to common questions</p>
+                                    <a href="{% url 'community:faq_list' %}" class="btn btn-sm btn-outline-primary">Read FAQ</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h3 class="h5"><i class="bi bi-flag"></i> Report System</h3>
+                                    <p class="small text-muted">Help keep our community safe</p>
+                                    <a href="{% url 'community:report_create' %}" class="btn btn-sm btn-outline-danger">Report Content</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Community Features</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-person-circle me-2"></i> User profiles and management
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-file-earmark-text me-2"></i> Content creation and sharing
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-chat-square-text me-2"></i> Discussion forums
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-envelope me-2"></i> Direct messaging
+                        </li>
+                        <li class="list-group-item d-flex align-items-center">
+                            <i class="bi bi-bell me-2"></i> Notifications
+                        </li>
+                        <li class="list-group-item d-flex align-items-center bg-light">
+                            <i class="bi bi-grid-3x3-gap me-2 text-success"></i> <strong>Board/Category structure</strong>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center bg-light">
+                            <i class="bi bi-shield-check me-2 text-success"></i> <strong>Moderation system</strong>
+                        </li>
+                        <li class="list-group-item d-flex align-items-center bg-light">
+                            <i class="bi bi-megaphone me-2 text-success"></i> <strong>Notices & FAQ management</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Quick Search</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{% url 'community:search' %}" method="get">
+                        <div class="input-group">
+                            <input type="text" name="q" class="form-control" placeholder="Search community...">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
