@@ -3,6 +3,7 @@ from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.http import HttpResponseRedirect
 from django.views.generic import CreateView, UpdateView, DetailView, ListView, FormView
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
@@ -37,12 +38,22 @@ class CustomLogoutView(LogoutView):
     """
     Custom logout view.
     """
-    next_page = reverse_lazy('login')
+    next_page = reverse_lazy('home')
+    http_method_names = ["get", "post", "options"]
 
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             messages.info(request, _('You have been logged out.'))
         return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        """Logout may be done via GET."""
+        logout(request)
+        redirect_to = self.get_success_url()
+        if redirect_to != request.get_full_path():
+            # Redirect to target page once the session has been cleared.
+            return HttpResponseRedirect(redirect_to)
+        return super().get(request, *args, **kwargs)
 
 class UserRegistrationView(CreateView):
     """
@@ -51,7 +62,7 @@ class UserRegistrationView(CreateView):
     model = User
     form_class = UserRegistrationForm
     template_name = 'users/register.html'
-    success_url = reverse_lazy('login')
+    success_url = reverse_lazy('users:login')
 
     def form_valid(self, form):
         response = super().form_valid(form)
@@ -88,7 +99,7 @@ class UserProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = UserProfile
     form_class = UserProfileForm
     template_name = 'users/profile_update.html'
-    success_url = reverse_lazy('profile')
+    success_url = reverse_lazy('users:profile')
 
     def get_object(self):
         return get_object_or_404(UserProfile, user=self.request.user)
@@ -104,7 +115,7 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
     model = User
     form_class = UserUpdateForm
     template_name = 'users/user_update.html'
-    success_url = reverse_lazy('profile')
+    success_url = reverse_lazy('users:profile')
 
     def get_object(self):
         return self.request.user
@@ -119,7 +130,7 @@ class CustomPasswordChangeView(LoginRequiredMixin, PasswordChangeView):
     """
     form_class = CustomPasswordChangeForm
     template_name = 'users/password_change.html'
-    success_url = reverse_lazy('profile')
+    success_url = reverse_lazy('users:profile')
 
     def form_valid(self, form):
         messages.success(self.request, _('Your password has been changed.'))
@@ -133,7 +144,7 @@ class CustomPasswordResetView(PasswordResetView):
     template_name = 'users/password_reset.html'
     email_template_name = 'users/password_reset_email.html'
     subject_template_name = 'users/password_reset_subject.txt'
-    success_url = reverse_lazy('password_reset_done')
+    success_url = reverse_lazy('users:password_reset_done')
 
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     """
@@ -141,7 +152,7 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
     """
     form_class = CustomSetPasswordForm
     template_name = 'users/password_reset_confirm.html'
-    success_url = reverse_lazy('password_reset_complete')
+    success_url = reverse_lazy('users:password_reset_complete')
 
 # Function-based views for simpler operations
 
