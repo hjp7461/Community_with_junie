@@ -22,6 +22,9 @@
   - `wsgi.py` 및 `asgi.py`: 웹 서버 게이트웨이 인터페이스
 - `docs/`: 문서 파일
   - `requirements.md`: 프로젝트 요구사항 문서
+  - `permission_system.md`: 권한 시스템 문서
+  - `static_media_configuration.md`: 정적 및 미디어 파일 설정 문서
+  - `tasks.md`: 프로젝트 작업 목록
 - `static/`: 정적 파일 (CSS, JavaScript, 이미지 등)
 - `templates/`: HTML 템플릿
   - `base.html`: 기본 템플릿 레이아웃
@@ -41,6 +44,7 @@
     - `register.html`: 회원가입 페이지
     - `profile.html`, `profile_update.html`, `user_update.html`: 프로필 관련 템플릿
     - `password_change.html`, `password_reset.html`, `password_reset_complete.html`, `password_reset_confirm.html`, `password_reset_done.html`, `password_reset_email.html`, `password_reset_subject.txt`: 비밀번호 관련 템플릿
+    - `permission_badge.html`: 권한 배지 템플릿
 - `users/`: 사용자 관리 Django 앱
   - `models.py`: 사용자 모델 정의
   - `views.py`: 사용자 관련 뷰 함수
@@ -48,8 +52,17 @@
   - `urls.py`: 사용자 관련 URL 라우팅
   - `admin.py`: 관리자 인터페이스 설정
   - `signals.py`: 사용자 관련 시그널 처리
+  - `middleware.py`: 사용자 관련 미들웨어
+  - `permissions.py`: 권한 관련 코드
   - `tests.py`: 테스트 코드
   - `migrations/`: 데이터베이스 마이그레이션 파일
+  - `management/`: 커스텀 관리 명령어
+    - `commands/`: 관리 명령어 모듈
+      - `manage_roles.py`: 사용자 역할 관리 명령어
+  - `templatetags/`: 커스텀 템플릿 태그
+    - `user_tags.py`: 사용자 관련 템플릿 태그
+- `logs/`: 로그 파일
+  - `permission_audit.log`: 권한 감사 로그
 - `.junie/`: 프로젝트 가이드라인 및 문서
   - `guidelines.md`: 프로젝트 가이드라인 문서
 - `.venv/`: 가상 환경 디렉토리
