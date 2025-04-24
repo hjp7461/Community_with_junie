@@ -1,0 +1,5 @@
+{% if is_authenticated and highest_role %}
+<span class="badge badge-{{ highest_role.name|lower|slugify }}" title="{{ highest_role.description }}">
+    {{ highest_role.name }}
+</span>
+{% endif %}

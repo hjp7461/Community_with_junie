@@ -42,6 +42,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # Custom middleware for permission management
+    'users.middleware.PermissionTrackingMiddleware',
+    'users.middleware.PermissionAuditMiddleware',
+    'users.middleware.LeastPrivilegeMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -128,3 +132,43 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For developm
 LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'home'
 LOGOUT_REDIRECT_URL = 'home'
+
+# Permission system settings
+PERMISSION_DENIED_THRESHOLD = 5  # Number of permission denials before logging a warning
+PERMISSION_REVIEW_DAYS = 30  # Number of days between permission reviews
+
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'permission_audit.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'permission_audit': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
+}

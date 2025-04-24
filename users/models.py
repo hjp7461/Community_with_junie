@@ -22,6 +22,81 @@ class User(AbstractUser):
     def __str__(self):
         return self.username
 
+    def get_roles(self):
+        """
+        Get all roles assigned to the user.
+        """
+        return [assignment.role for assignment in self.role_assignments.all()]
+
+    def has_role(self, role_name):
+        """
+        Check if the user has a specific role.
+        """
+        return self.role_assignments.filter(role__name=role_name).exists()
+
+    def get_permissions(self):
+        """
+        Get all permissions from all roles assigned to the user.
+        Takes into account role hierarchy.
+        """
+        permissions = {}
+        roles = self.get_roles()
+
+        # Process roles to get all permissions
+        for role in roles:
+            # Get all permission fields
+            for field in role._meta.fields:
+                if field.name.startswith('can_') and isinstance(field, models.BooleanField):
+                    # If permission is not set or is False, check the value from this role
+                    if field.name not in permissions or not permissions[field.name]:
+                        permissions[field.name] = getattr(role, field.name)
+
+            # Check parent roles recursively
+            current_parent = role.parent_role
+            while current_parent:
+                for field in current_parent._meta.fields:
+                    if field.name.startswith('can_') and isinstance(field, models.BooleanField):
+                        # Only override if not already set to True
+                        if field.name not in permissions or not permissions[field.name]:
+                            permissions[field.name] = getattr(current_parent, field.name)
+                current_parent = current_parent.parent_role
+
+        return permissions
+
+    def has_permission(self, permission_name):
+        """
+        Check if the user has a specific permission.
+        Takes into account role hierarchy.
+        """
+        # Superusers have all permissions
+        if self.is_superuser:
+            return True
+
+        # Get all permissions
+        permissions = self.get_permissions()
+
+        # Check if the permission exists and is True
+        return permissions.get(permission_name, False)
+
+    def get_trust_level(self):
+        """
+        Get the highest trust level from all roles assigned to the user.
+        """
+        roles = self.get_roles()
+        if not roles:
+            return 0
+        return max(role.trust_level for role in roles)
+
+    def has_temporary_role(self):
+        """
+        Check if the user has any temporary roles.
+        """
+        from django.utils import timezone
+        return self.role_assignments.filter(
+            role__is_temporary=True, 
+            role__valid_until__gt=timezone.now()
+        ).exists()
+
     class Meta:
         verbose_name = _('user')
         verbose_name_plural = _('users')
@@ -66,17 +141,44 @@ class UserRole(models.Model):
     """
     User role model for managing permissions and roles.
 
-    This model allows for defining different roles like admin, moderator, etc.
+    This model allows for defining different roles like super admin, admin, moderator, etc.
     """
     name = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True)
 
-    # Permissions
-    can_edit_posts = models.BooleanField(default=False)
-    can_delete_posts = models.BooleanField(default=False)
-    can_ban_users = models.BooleanField(default=False)
+    # Content Permissions
+    can_read_content = models.BooleanField(default=True)
+    can_create_content = models.BooleanField(default=False)
+    can_edit_own_content = models.BooleanField(default=False)
+    can_delete_own_content = models.BooleanField(default=False)
+    can_edit_any_content = models.BooleanField(default=False)
+    can_delete_any_content = models.BooleanField(default=False)
     can_approve_content = models.BooleanField(default=False)
-    can_manage_roles = models.BooleanField(default=False)
+
+    # User Management Permissions
+    can_view_users = models.BooleanField(default=False)
+    can_warn_users = models.BooleanField(default=False)
+    can_suspend_users = models.BooleanField(default=False)
+    can_ban_users = models.BooleanField(default=False)
+    can_change_user_roles = models.BooleanField(default=False)
+    can_manage_user_data = models.BooleanField(default=False)
+
+    # System Management Permissions
+    can_manage_categories = models.BooleanField(default=False)
+    can_manage_system_settings = models.BooleanField(default=False)
+    can_access_logs = models.BooleanField(default=False)
+    can_manage_api = models.BooleanField(default=False)
+
+    # Role hierarchy
+    is_super_role = models.BooleanField(default=False)
+    parent_role = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='child_roles')
+
+    # Trust-based permissions
+    trust_level = models.PositiveIntegerField(default=0)
+
+    # Temporary role settings
+    is_temporary = models.BooleanField(default=False)
+    valid_until = models.DateTimeField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

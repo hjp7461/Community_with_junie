@@ -37,9 +37,9 @@ class UserAdmin(BaseUserAdmin):
     )
 
 class UserRoleAdmin(admin.ModelAdmin):
-    list_display = ('name', 'can_edit_posts', 'can_delete_posts', 'can_ban_users', 'can_approve_content', 'can_manage_roles')
+    list_display = ('name', 'can_edit_own_content', 'can_delete_own_content', 'can_edit_any_content', 'can_delete_any_content', 'can_approve_content', 'can_ban_users', 'can_change_user_roles')
     search_fields = ('name', 'description')
-    list_filter = ('can_edit_posts', 'can_delete_posts', 'can_ban_users', 'can_approve_content', 'can_manage_roles')
+    list_filter = ('can_edit_own_content', 'can_delete_own_content', 'can_edit_any_content', 'can_delete_any_content', 'can_approve_content', 'can_ban_users', 'can_change_user_roles')
 
 class UserRoleAssignmentAdmin(admin.ModelAdmin):
     list_display = ('user', 'role', 'assigned_by', 'assigned_at')
