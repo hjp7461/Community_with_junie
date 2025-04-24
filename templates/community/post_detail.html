@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load community_tags %}
 
 {% block title %}{{ post.title }}{% endblock %}
 
@@ -11,7 +12,7 @@
             <li class="breadcrumb-item active">{{ post.title }}</li>
         </ol>
     </nav>
-    
+
     <!-- Post -->
     <div class="card mb-4">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
@@ -20,6 +21,7 @@
                 {% if post.is_pinned %}<span class="badge bg-danger me-1">Pinned</span>{% endif %}
                 {% if post.is_locked %}<span class="badge bg-warning me-1">Locked</span>{% endif %}
                 <span class="badge bg-secondary">Views: {{ post.view_count }}</span>
+                <span class="badge bg-primary ms-1">Likes: <span id="post-like-count">{{ post.get_like_count }}</span></span>
             </div>
         </div>
         <div class="card-body">
@@ -35,11 +37,24 @@
                     </div>
                 {% endif %}
             </div>
-            
+
             <div class="post-content mb-4">
                 {{ post.content|linebreaks }}
             </div>
-            
+
+            <!-- Post like button -->
+            {% if user.is_authenticated %}
+                <div class="post-actions mb-3">
+                    <form method="post" action="{% url 'community:post_like_toggle' post_id=post.id %}" class="like-form" data-target="post" data-id="{{ post.id }}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm {% if is_post_liked %}btn-primary{% else %}btn-outline-primary{% endif %} like-button">
+                            <i class="bi bi-heart{% if is_post_liked %}-fill{% endif %}"></i> 
+                            <span class="like-text">{% if is_post_liked %}Liked{% else %}Like{% endif %}</span>
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+
             {% if post.media.exists %}
                 <div class="post-media mb-4">
                     <h5>Attached Media</h5>
@@ -67,7 +82,7 @@
                     </div>
                 </div>
             {% endif %}
-            
+
             {% if user == post.author and not post.is_locked %}
                 <div class="mt-4">
                     <h5>Add Media</h5>
@@ -107,7 +122,7 @@
             {% endif %}
         </div>
     </div>
-    
+
     <!-- Comments -->
     <div class="card mb-4">
         <div class="card-header bg-light">
@@ -132,11 +147,27 @@
                         <div class="comment-content mt-2">
                             {{ comment.content|linebreaks }}
                         </div>
-                        
-                        <!-- Reply button -->
+
+                        <div class="comment-actions d-flex align-items-center">
+                            <!-- Like button for comment -->
+                            {% if user.is_authenticated %}
+                                <form method="post" action="{% url 'community:comment_like_toggle' comment_id=comment.id %}" class="like-form me-3" data-target="comment" data-id="{{ comment.id }}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm {% if comment_like_status|get_item:comment.id %}btn-primary{% else %}btn-outline-primary{% endif %} like-button">
+                                        <i class="bi bi-heart{% if comment_like_status|get_item:comment.id %}-fill{% endif %}"></i>
+                                        <span class="like-count">{{ comment.get_like_count }}</span>
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="me-3">
+                                    <i class="bi bi-heart"></i> <span class="like-count">{{ comment.get_like_count }}</span>
+                                </span>
+                            {% endif %}
+
+                            <!-- Reply button -->
                         {% if not post.is_locked %}
                             <button class="btn btn-sm btn-outline-secondary mt-2 reply-button" data-comment-id="{{ comment.id }}">Reply</button>
-                            
+
                             <!-- Reply form (hidden by default) -->
                             <div class="reply-form mt-3" id="reply-form-{{ comment.id }}" style="display: none;">
                                 <form method="post" action="{% url 'community:comment_create' post_id=post.id %}">
@@ -151,7 +182,7 @@
                                 </form>
                             </div>
                         {% endif %}
-                        
+
                         <!-- Replies -->
                         {% if comment.replies.exists %}
                             <div class="replies mt-3 ms-4">
@@ -172,6 +203,23 @@
                                         <div class="reply-content mt-2">
                                             {{ reply.content|linebreaks }}
                                         </div>
+
+                                        <!-- Like button for reply -->
+                                        <div class="reply-actions">
+                                            {% if user.is_authenticated %}
+                                                <form method="post" action="{% url 'community:comment_like_toggle' comment_id=reply.id %}" class="like-form" data-target="comment" data-id="{{ reply.id }}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm {% if comment_like_status|get_item:reply.id %}btn-primary{% else %}btn-outline-primary{% endif %} like-button">
+                                                        <i class="bi bi-heart{% if comment_like_status|get_item:reply.id %}-fill{% endif %}"></i>
+                                                        <span class="like-count">{{ reply.get_like_count }}</span>
+                                                    </button>
+                                                </form>
+                                            {% else %}
+                                                <span>
+                                                    <i class="bi bi-heart"></i> <span class="like-count">{{ reply.get_like_count }}</span>
+                                                </span>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 {% endfor %}
                             </div>
@@ -184,7 +232,7 @@
                     <p class="mb-0">No comments yet. Be the first to comment!</p>
                 </div>
             {% endif %}
-            
+
             <!-- New comment form -->
             {% if user.is_authenticated and not post.is_locked %}
                 <div class="mt-4">
@@ -224,7 +272,7 @@
         // Reply functionality
         const replyButtons = document.querySelectorAll('.reply-button');
         const cancelButtons = document.querySelectorAll('.cancel-reply');
-        
+
         replyButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const commentId = this.getAttribute('data-comment-id');
@@ -232,12 +280,68 @@
                 this.style.display = 'none';
             });
         });
-        
+
         cancelButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const commentId = this.getAttribute('data-comment-id');
                 document.getElementById(`reply-form-${commentId}`).style.display = 'none';
                 document.querySelector(`.reply-button[data-comment-id="${commentId}"]`).style.display = 'inline-block';
+            });
+        });
+
+        // Like functionality
+        const likeForms = document.querySelectorAll('.like-form');
+
+        likeForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const target = this.getAttribute('data-target');
+                const id = this.getAttribute('data-id');
+                const button = this.querySelector('.like-button');
+                const icon = button.querySelector('i');
+                const likeText = button.querySelector('.like-text');
+                const likeCount = target === 'post' 
+                    ? document.getElementById('post-like-count')
+                    : button.querySelector('.like-count');
+
+                // Send AJAX request
+                const formData = new FormData(this);
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', this.action, true);
+                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        const response = JSON.parse(xhr.responseText);
+
+                        // Update like count
+                        if (likeCount) {
+                            likeCount.textContent = response.like_count;
+                        }
+
+                        // Update button appearance
+                        if (response.is_liked) {
+                            button.classList.remove('btn-outline-primary');
+                            button.classList.add('btn-primary');
+                            icon.classList.remove('bi-heart');
+                            icon.classList.add('bi-heart-fill');
+                            if (likeText) {
+                                likeText.textContent = 'Liked';
+                            }
+                        } else {
+                            button.classList.remove('btn-primary');
+                            button.classList.add('btn-outline-primary');
+                            icon.classList.remove('bi-heart-fill');
+                            icon.classList.add('bi-heart');
+                            if (likeText) {
+                                likeText.textContent = 'Like';
+                            }
+                        }
+                    }
+                };
+
+                xhr.send(formData);
             });
         });
     });

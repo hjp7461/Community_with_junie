@@ -37,4 +37,8 @@ urlpatterns = [
     # Media URLs
     path('post/<int:post_id>/media/upload/', views.media_upload, name='media_upload'),
     path('media/<int:media_id>/delete/', views.media_delete, name='media_delete'),
+
+    # Like URLs
+    path('post/<int:post_id>/like/', views.post_like_toggle, name='post_like_toggle'),
+    path('comment/<int:comment_id>/like/', views.comment_like_toggle, name='comment_like_toggle'),
 ]

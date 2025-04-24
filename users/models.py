@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
+from django.urls import reverse
 
 class User(AbstractUser):
     """
@@ -96,6 +97,49 @@ class User(AbstractUser):
             role__is_temporary=True, 
             role__valid_until__gt=timezone.now()
         ).exists()
+
+    def is_following(self, user):
+        """
+        Check if the current user is following the given user.
+        """
+        if not user or user.id == self.id:
+            return False
+        return self.following.filter(following=user).exists()
+
+    def follow(self, user):
+        """
+        Follow the given user.
+        Returns True if the user was followed, False if already following.
+        """
+        if not user or user.id == self.id:
+            return False
+
+        if not self.is_following(user):
+            Follow.objects.create(follower=self, following=user)
+            return True
+        return False
+
+    def unfollow(self, user):
+        """
+        Unfollow the given user.
+        Returns True if the user was unfollowed, False if not following.
+        """
+        if not user or user.id == self.id:
+            return False
+
+        follow = self.following.filter(following=user).first()
+        if follow:
+            follow.delete()
+            return True
+        return False
+
+    def get_following_posts(self):
+        """
+        Get all posts from users that the current user is following.
+        """
+        from community.models import Post
+        following_users = self.following.values_list('following', flat=True)
+        return Post.objects.filter(author__in=following_users).order_by('-created_at')
 
     class Meta:
         verbose_name = _('user')
@@ -221,3 +265,34 @@ class UserRoleAssignment(models.Model):
         verbose_name = _('user role assignment')
         verbose_name_plural = _('user role assignments')
         unique_together = ('user', 'role')
+
+
+class Follow(models.Model):
+    """
+    Model for user follow relationships.
+
+    This model represents a follow relationship between two users,
+    where one user (follower) follows another user (following).
+    """
+    follower = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='following',
+        verbose_name=_('follower')
+    )
+    following = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='followers',
+        verbose_name=_('following')
+    )
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.follower.username} follows {self.following.username}"
+
+    class Meta:
+        verbose_name = _('follow')
+        verbose_name_plural = _('follows')
+        unique_together = ('follower', 'following')
+        ordering = ['-created_at']

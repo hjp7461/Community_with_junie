@@ -9,7 +9,7 @@ from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
 
-from .models import Category, Board, Report, Notice, FAQ, Post, Comment, Media
+from .models import Category, Board, Report, Notice, FAQ, Post, Comment, Media, Like
 from .forms import ReportForm, PostForm, CommentForm, MediaForm, PostWithMediaForm
 
 class CategoryListView(ListView):
@@ -228,6 +228,20 @@ class PostDetailView(DetailView):
         context['comments'] = comments
         context['comment_form'] = CommentForm()
         context['media_form'] = MediaForm()
+
+        # Add like information
+        user = self.request.user
+        if user.is_authenticated:
+            context['is_post_liked'] = self.object.is_liked_by(user)
+            # Add like status for each comment
+            comment_like_status = {}
+            for comment in comments:
+                comment_like_status[comment.id] = comment.is_liked_by(user)
+                # Also check replies
+                for reply in comment.replies.all():
+                    comment_like_status[reply.id] = reply.is_liked_by(user)
+            context['comment_like_status'] = comment_like_status
+
         return context
 
 
@@ -386,3 +400,47 @@ def media_delete(request, media_id):
     return render(request, 'community/media_confirm_delete.html', {
         'media': media,
     })
+
+
+# Like Views
+@login_required
+@require_POST
+def post_like_toggle(request, post_id):
+    """
+    View for toggling like status for a post.
+    """
+    post = get_object_or_404(Post, id=post_id)
+    is_liked = post.toggle_like(request.user)
+
+    # If this is an AJAX request, return JSON response
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'is_liked': is_liked,
+            'like_count': post.get_like_count()
+        })
+
+    # Otherwise redirect back to the post detail page
+    return redirect('community:post_detail', pk=post_id)
+
+
+@login_required
+@require_POST
+def comment_like_toggle(request, comment_id):
+    """
+    View for toggling like status for a comment.
+    """
+    comment = get_object_or_404(Comment, id=comment_id)
+    is_liked = comment.toggle_like(request.user)
+    post_id = comment.post.id
+
+    # If this is an AJAX request, return JSON response
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'is_liked': is_liked,
+            'like_count': comment.get_like_count()
+        })
+
+    # Otherwise redirect back to the post detail page
+    return redirect('community:post_detail', pk=post_id)

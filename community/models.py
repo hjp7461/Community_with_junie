@@ -6,6 +6,8 @@ from PIL import Image
 import os
 from io import BytesIO
 from django.core.files.base import ContentFile
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 
 class Category(models.Model):
     """
@@ -223,11 +225,50 @@ class Post(models.Model):
     is_pinned = models.BooleanField(_('is pinned'), default=False)
     is_locked = models.BooleanField(_('is locked'), default=False)
     view_count = models.PositiveIntegerField(_('view count'), default=0)
+    likes = GenericRelation('Like', related_query_name='post')
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
 
     def __str__(self):
         return self.title
+
+    def get_like_count(self):
+        """
+        Get the total number of likes for this post.
+        """
+        return self.likes.count()
+
+    def is_liked_by(self, user):
+        """
+        Check if the post is liked by the given user.
+        """
+        if not user.is_authenticated:
+            return False
+        return self.likes.filter(user=user).exists()
+
+    def toggle_like(self, user):
+        """
+        Toggle like status for the given user.
+        Returns True if the post was liked, False if unliked.
+        """
+        if not user.is_authenticated:
+            return False
+
+        like = self.likes.filter(user=user).first()
+        if like:
+            # Unlike
+            like.delete()
+            return False
+        else:
+            # Like
+            from django.contrib.contenttypes.models import ContentType
+            content_type = ContentType.objects.get_for_model(self)
+            Like.objects.create(
+                user=user,
+                content_type=content_type,
+                object_id=self.id
+            )
+            return True
 
     class Meta:
         verbose_name = _('post')
@@ -262,11 +303,50 @@ class Comment(models.Model):
         related_name='replies',
         verbose_name=_('parent comment')
     )
+    likes = GenericRelation('Like', related_query_name='comment')
     created_at = models.DateTimeField(_('created at'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
 
     def __str__(self):
         return f"Comment by {self.author} on {self.post}"
+
+    def get_like_count(self):
+        """
+        Get the total number of likes for this comment.
+        """
+        return self.likes.count()
+
+    def is_liked_by(self, user):
+        """
+        Check if the comment is liked by the given user.
+        """
+        if not user.is_authenticated:
+            return False
+        return self.likes.filter(user=user).exists()
+
+    def toggle_like(self, user):
+        """
+        Toggle like status for the given user.
+        Returns True if the comment was liked, False if unliked.
+        """
+        if not user.is_authenticated:
+            return False
+
+        like = self.likes.filter(user=user).first()
+        if like:
+            # Unlike
+            like.delete()
+            return False
+        else:
+            # Like
+            from django.contrib.contenttypes.models import ContentType
+            content_type = ContentType.objects.get_for_model(self)
+            Like.objects.create(
+                user=user,
+                content_type=content_type,
+                object_id=self.id
+            )
+            return True
 
     class Meta:
         verbose_name = _('comment')
@@ -326,3 +406,34 @@ class Media(models.Model):
         verbose_name = _('media')
         verbose_name_plural = _('media')
         ordering = ['created_at']
+
+
+class Like(models.Model):
+    """
+    Like model for user likes/recommendations on content.
+
+    This model uses a generic relation to allow likes on different types of content
+    (posts, comments, etc.)
+    """
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='likes',
+        verbose_name=_('user')
+    )
+    # Generic relation fields
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+
+    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user} likes {self.content_object}"
+
+    class Meta:
+        verbose_name = _('like')
+        verbose_name_plural = _('likes')
+        ordering = ['-created_at']
+        # Ensure a user can only like a specific object once
+        unique_together = ('user', 'content_type', 'object_id')
